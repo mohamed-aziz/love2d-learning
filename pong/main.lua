@@ -74,7 +74,7 @@ function love.load()
    love.graphics.setBackgroundColor(20, 40, 70)
    paddleOne = paddle:init(400, 10, {x=0, y=0})
    paddleOponnent = paddle:init(400, 10, {x=love.graphics.getWidth()-10*2, y=0})
-   ourBall = ball:init(100, 20, {x=20, y=100}, 3)
+   ourBall = ball:init(200, 20, {x=20, y=100}, 3)
 end
 
 
@@ -102,8 +102,8 @@ end
 
 counter = 0  
 function love.update(dt)
-   -- Main logic is here
    
+   -- Main logic is here   
    if paddleOne.moving then
       if paddleOne.movingDirection == "up" then
 	 paddleOne:moveUp(dt)
@@ -146,8 +146,7 @@ function love.update(dt)
    end
 
    if (ourBall.position.x + ourBall.side >= love.graphics.getWidth()) then
-      ourBall.vx = ourBall.vx * -1
-      ourBall.position.x = love.graphics.getWidth() - ourBall.side
+      
    end
 
    if (ourBall.position.x<=0) then
@@ -158,16 +157,16 @@ function love.update(dt)
    -- check collision with paddles
    if (ourBall.position.x<=20) then
       if (ourBall.position.y>=paddleOne.position.y) and (ourBall.position.y<=paddleOne.position.y+100) then
+	 print(ourBall.position.x)
 	 ourBall.vx = ourBall.vx * -1
 	 ourBall.position.x = 20
       end
    end
 
-   if (ourBall.position.x+ourBall.side>=love.graphics.getWidth()) then
+   if (ourBall.position.x+ourBall.side>=love.graphics.getWidth() - 20) then
       if (ourBall.position.y>=paddleOponnent.position.y) and (ourBall.position.y<=paddleOponnent.position.y+100) then
-	 print("HYA")
 	 ourBall.vx = ourBall.vx * -1
-	 ourBall.position.x = love.graphics.getWidth() - 20
+	 ourBall.position.x = love.graphics.getWidth() - 10 * 2 - ourBall.side
       end
    end
    
