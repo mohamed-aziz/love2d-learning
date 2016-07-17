@@ -5,6 +5,8 @@
 
    NOTE: This my first project using lua and love2d, so I have
    no prior knowledge of lua and love2d.
+   I also build a simple AI that will just follow the ball when
+   the velocity is positive (the ball is going toward the oponnent)
 --]]
 
 
@@ -84,12 +86,7 @@ function love.keypressed(key)
    if key == "up" or key == "down" then
       paddleOne.moving = true
       paddleOne.movingDirection = key
-   end
-   if key == "a" or key == "q" then
-      paddleOponnent.moving = true
-      paddleOponnent.movingDirection = key
-   end
-   
+   end   
 end
 
 
@@ -97,7 +94,6 @@ function love.keyreleased(key)
    -- This stops moving the user's paddle (paddleOne)
    -- change the state of moving
    paddleOne.moving = false
-   paddleOponnent.moving = false
 end
 
 counter = 0  
@@ -112,14 +108,30 @@ function love.update(dt)
       end
    end
 
-   if paddleOponnent.moving then
-      if paddleOponnent.movingDirection == "a" then
+   if ourBall.vx>0 then
+      -- This will basically follow the ball ?
+      if paddleOponnent.position.y+50>ourBall.position.y then
+	 paddleOponnent.moving = true
 	 paddleOponnent:moveUp(dt)
-      elseif paddleOponnent.movingDirection == "q" then
+      end
+      
+      if paddleOponnent.position.y+50<ourBall.position.y then
+	 paddleOponnent.moving = true
 	 paddleOponnent:moveDown(dt)
       end
+   else
+      -- The oponnent will wait in the middle so he have higher chance
+      -- to get the ball
+      if paddleOponnent.position.y+50<love.graphics.getHeight()/2 then
+	 paddleOponnent.moving = true
+	 paddleOponnent:moveDown(dt)
+      end
+      if paddleOponnent.position.y+50>love.graphics.getHeight()/2 then
+	 paddleOponnent.moving = true
+	 paddleOponnent:moveUp(dt)
+      end
    end
-      
+   
    counter = counter + dt
    if counter>=0.08 then -- that's about 5 frames under my intel gpu with linux4.6
       if table.getn(ourBall.ballsPos) == ourBall.shadowed then
