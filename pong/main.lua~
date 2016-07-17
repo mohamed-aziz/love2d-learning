@@ -1,0 +1,96 @@
+--[[
+   
+   @author: Mohamed Aziz Knani (medazizknani@gmail.com)
+   @since: 16/07/2016
+
+   NOTE: Code written while starting out love2d.
+--]]
+
+
+-- this is our paddle
+paddle = {}
+
+function paddle:init(speed, step, position)
+   -- this is our class constructer
+   -- @speed is the constant speed of the paddle (pixel per second)
+   -- @step is the paddle move step size (in pixels of course)
+   -- @position is the rectangle upper-left corner position
+   -- TODO: Set max speed for the AI player.
+
+   newObj = {speed = speed, step = step, position = position, moving = false}
+   self.__index = self
+   return setmetatable(newObj, self)
+end
+
+
+function paddle:moveUp()
+   -- This method  moves the paddle up
+   -- basically if the paddle is moving and still in the box
+   if paddleOne.moving and self.position.y-self.step>=0 then
+      self.position.y = self.position.y - self.step
+   end   
+end
+
+
+function paddle:moveDown()
+   -- This method  moves the paddle down
+   -- hardcoded for now..
+   if paddleOne.moving and self.position.y+self.step+100<=love.graphics.getHeight() then
+      self.position.y = self.position.y + self.step
+   end
+end
+
+function paddle:draw()
+   -- This method draws our paddle to the screen
+   -- blueish color (I don't like blakc)
+   love.graphics.rectangle("fill", self.position.x, self.position.y, 20, 100)
+end
+
+-- This is out ball
+ball = {}
+
+
+
+function love.load()
+   -- This is where is laod all my assets
+   love.graphics.setBackgroundColor(20, 40, 70)
+   paddleOne = paddle:init(10, 10, {x=0, y=0})
+   paddleOponnent = paddle:init(10, 10, {x=love.graphics.getWidth()-10*2, y=0})
+end
+
+
+function love.keypressed(key)
+   -- This moves the user's paddle (paddleOne)
+   -- change the state of moving
+   if key == "up" or key == "down" then
+      paddleOne.moving = true
+      paddleOne.movingDirection = key
+   end
+end
+
+
+function love.keyreleased(key)
+   -- This stops moving the user's paddle (paddleOne)
+   -- change the state of moving
+   paddleOne.moving = false
+end
+
+   
+function love.update(dt)
+   -- This is where I do all of my math
+   if paddleOne.moving then
+      if paddleOne.movingDirection == "up" then
+	 paddleOne:moveUp()
+      elseif paddleOne.movingDirection == "down" then
+	 paddleOne:moveDown()
+      end
+   end
+end
+
+
+function love.draw()
+   -- This is where I draw to the screen
+   paddleOne:draw()
+   paddleOponnent:draw()
+end
+
