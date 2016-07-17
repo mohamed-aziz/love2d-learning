@@ -3,7 +3,7 @@ My projects made while starting out love2d and lua.
 
 # Online Testing
 
-You can test the projects online by following [http://mohamed-aziz.github.io/games/](this link).
+You can test the projects online by following [this link](http://mohamed-aziz.github.io/games/).
 
 # Run the programs
 
