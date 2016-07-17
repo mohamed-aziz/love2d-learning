@@ -9,10 +9,9 @@
    the velocity is positive (the ball is going toward the oponnent)
 --]]
 
+choice = {-1, 1}
 
 -- this is our paddle
-
-choice = {-1, 1}
 
 paddle = {}
 
@@ -24,6 +23,7 @@ function paddle:init(speed, step, position)
    -- TODO: Set max speed for the AI player.
 
    newObj = {speed = speed, position = position, moving = false}
+   self.defaultSpeed = speed
    self.score = 0
    self.__index = self
    return setmetatable(newObj, self)
@@ -58,6 +58,8 @@ function ball:init(speed, side, position, nshadowed)
    -- @nshadowed is the number of shadowed balls - 1
    
    myObj = {side=side, speed=speed, position=position, shadowed=nshadowed+1, ballsPos={}}
+   self.defaultSpeed = speed
+   self.color = {222, 219, 220}
    self.vx = 1
    self.vy = 1
    self.__index = self
@@ -67,10 +69,10 @@ end
 function ball:draw()
    -- Draws our ball to the screen
    for key, value in pairs(self.ballsPos) do
-      love.graphics.setColor(222, 219, 220, 255 - key * 30)
+      love.graphics.setColor(self.color[1], self.color[2], self.color[3], 255 - key * 30)
       love.graphics.rectangle("fill", value.x, value.y, key*4, key*4)
    end
-   love.graphics.setColor(222, 219, 220, 255)
+   love.graphics.setColor(self.color[1], self.color[2], self.color[3], 255)
    love.graphics.rectangle("fill", self.position.x, self.position.y, self.side, self.side)
 end
 
@@ -84,6 +86,28 @@ function love.load()
    paddleOne = paddle:init(400, 10, {x=0, y=0})
    paddleOponnent = paddle:init(400, 10, {x=love.graphics.getWidth()-10*2, y=0})
    ourBall = ball:init(400, 20, {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2}, 3)
+
+   powerUps = {
+      -- time is in seconds
+      -- screenName is string to be displayed
+      ["turboball"]={
+	 ["screenName"]="Turbo-Ball",
+	 ["used"]=false,
+	 ["time"]=10,
+	 ["done"]=false,
+	 ["shortcut"]="t",
+	 ["positionx"]=150
+      },
+
+      ["block"]={
+	 ["screenName"]="Block-oponnent",
+	 ["used"]=false,
+	 ["time"]=10,
+	 ["done"]=false,
+	 ["shortcut"]="b",
+	 ["positionx"]=270
+      }
+   }
 end
 
 
@@ -93,7 +117,19 @@ function love.keypressed(key)
    if key == "up" or key == "down" then
       paddleOne.moving = true
       paddleOne.movingDirection = key
-   end   
+   end
+
+   if key==powerUps["turboball"]["shortcut"] and not powerUps["turboball"]["done"] then
+      powerUps["turboball"]["used"] = true
+      ourBall.speed = 600
+      ourBall.color = {204, 74, 20}
+   end
+
+   if key==powerUps["block"]["shortcut"] and not powerUps["block"]["done"] then
+      powerUps["block"]["used"] = true
+      paddleOponnent.speed = 0
+   end
+   
 end
 
 
@@ -178,6 +214,26 @@ function love.update(dt)
       ourBall.vx = choice[math.random(1, 2)]
    end
 
+   if powerUps["turboball"]["used"] and not powerUps["turboball"]["done"] then
+      powerUps["turboball"]["time"] =  powerUps["turboball"]["time"] - dt
+      if powerUps["turboball"]["time"] <= 0 then
+	 powerUps["turboball"]["done"] = true
+	 powerUps["turboball"]["used"] = false
+	 ourBall.speed = ourBall.defaultSpeed
+	 ourBall.color = {222, 219, 220}
+      end
+   end
+
+
+   if powerUps["block"]["used"] and not powerUps["block"]["done"] then
+      powerUps["block"]["time"] = powerUps["block"]["time"] - dt
+      if powerUps["block"]["time"] <= 0 then
+	 powerUps["block"]["done"] = true
+	 powerUps["block"]["used"] = false
+	 paddleOponnent.speed = paddleOponnent.defaultSpeed
+      end
+   end
+   
    -- check collision with paddles
    if (ourBall.position.x<=20) then
       if (ourBall.position.y>=paddleOne.position.y) and (ourBall.position.y<=paddleOne.position.y+100) then
@@ -205,6 +261,17 @@ function love.draw()
    paddleOne:draw()
    paddleOponnent:draw()
    ourBall:draw()
-   love.graphics.print(paddleOne.score .. " " .. paddleOponnent.score, love.graphics.getWidth()/2 - 20)
-
+   love.graphics.setColor(222, 219, 220, 255)
+   love.graphics.print(paddleOne.score .. " - " .. paddleOponnent.score, love.graphics.getWidth()/2 - 20)
+   love.graphics.print("Power ups:", 30, love.graphics.getHeight() - 30)
+   for _, value in pairs(powerUps) do
+      if value["used"] then
+	 love.graphics.setColor(84, 204, 20)
+      elseif value["done"] then
+	 love.graphics.setColor(204, 74, 20)
+      else
+	 love.graphics.setColor(222, 219, 220, 255)
+      end
+      love.graphics.print(value["screenName"], value["positionx"], love.graphics.getHeight() - 30)
+   end
 end
