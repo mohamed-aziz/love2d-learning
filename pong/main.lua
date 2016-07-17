@@ -9,6 +9,7 @@
    the velocity is positive (the ball is going toward the oponnent)
 --]]
 
+messShow = true
 choice = {-1, 1}
 
 -- this is our paddle
@@ -108,6 +109,7 @@ function love.load()
 	 ["positionx"]=270
       }
    }
+
 end
 
 
@@ -129,7 +131,14 @@ function love.keypressed(key)
       powerUps["block"]["used"] = true
       paddleOponnent.speed = 0
    end
-   
+
+   if key=="r" then
+      love.load()
+   end
+
+   if key=="h" then
+      messShow = not messShow
+   end
 end
 
 
@@ -273,5 +282,8 @@ function love.draw()
 	 love.graphics.setColor(222, 219, 220, 255)
       end
       love.graphics.print(value["screenName"], value["positionx"], love.graphics.getHeight() - 30)
+   end
+   if messShow then
+      love.graphics.printf("Press t to enable turboball\nPress b to block oponnent\nPress r to run the game\nPress h to toggle this message", 0, 400, 800, "center")
    end
 end
