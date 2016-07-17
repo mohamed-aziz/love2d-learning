@@ -11,6 +11,7 @@
 
 messShow = true
 choice = {-1, 1}
+paused = true
 
 -- this is our paddle
 
@@ -80,12 +81,13 @@ end
 
 function love.load()
    -- This is where is laod all my assets
-
+   bgMusic = love.audio.newSource("weAreResistors.mp3")
+   bgMusic:play()
    font = love.graphics.newFont("Semi-Casual.ttf", 20)
    love.graphics.setFont(font)
    love.graphics.setBackgroundColor(20, 40, 70)
-   paddleOne = paddle:init(400, 10, {x=0, y=0})
-   paddleOponnent = paddle:init(400, 10, {x=love.graphics.getWidth()-10*2, y=0})
+   paddleOne = paddle:init(400, 10, {x=0, y=love.graphics.getHeight()/2 - 50})
+   paddleOponnent = paddle:init(400, 10, {x=love.graphics.getWidth()-10*2, y=love.graphics.getHeight()/2 - 50})
    ourBall = ball:init(400, 20, {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2}, 3)
 
    powerUps = {
@@ -139,6 +141,10 @@ function love.keypressed(key)
    if key=="h" then
       messShow = not messShow
    end
+
+   if key=="p" then
+      paused = not paused
+   end
 end
 
 
@@ -151,115 +157,117 @@ end
 counter = 0  
 function love.update(dt)
    
-   -- Main logic is here   
-   if paddleOne.moving then
-      if paddleOne.movingDirection == "up" then
-	 paddleOne:moveUp(dt)
-      elseif paddleOne.movingDirection == "down" then
-	 paddleOne:moveDown(dt)
+   -- Main logic is here
+   if not paused then
+      if paddleOne.moving then
+	 if paddleOne.movingDirection == "up" then
+	    paddleOne:moveUp(dt)
+	 elseif paddleOne.movingDirection == "down" then
+	    paddleOne:moveDown(dt)
+	 end
       end
-   end
 
-   if ourBall.vx>0 then
-      -- This will basically follow the ball ?
-      if paddleOponnent.position.y+50>ourBall.position.y then
-	 paddleOponnent.moving = true
-	 paddleOponnent:moveUp(dt)
+      if ourBall.vx>0 then
+	 -- This will basically follow the ball ?
+	 if paddleOponnent.position.y+50>ourBall.position.y then
+	    paddleOponnent.moving = true
+	    paddleOponnent:moveUp(dt)
+	 end
+	 
+	 if paddleOponnent.position.y+50<ourBall.position.y then
+	    paddleOponnent.moving = true
+	    paddleOponnent:moveDown(dt)
+	 end
+      else
+	 -- The oponnent will wait in the middle so he have higher chance
+	 -- to get the ball
+	 if paddleOponnent.position.y+50<love.graphics.getHeight()/2 then
+	    paddleOponnent.moving = true
+	    paddleOponnent:moveDown(dt)
+	 end
+	 if paddleOponnent.position.y+50>love.graphics.getHeight()/2 then
+	    paddleOponnent.moving = true
+	    paddleOponnent:moveUp(dt)
+	 end
       end
       
-      if paddleOponnent.position.y+50<ourBall.position.y then
-	 paddleOponnent.moving = true
-	 paddleOponnent:moveDown(dt)
+      counter = counter + dt
+      if counter>=0.08 then -- that's about 5 frames under my intel gpu with linux4.6
+	 if table.getn(ourBall.ballsPos) == ourBall.shadowed then
+	    -- remove last ball and queue the current position (does lua have buily-in queue?)
+	    table.remove(ourBall.ballsPos, 1)
+	    table.insert(ourBall.ballsPos, {x=ourBall.position.x, y=ourBall.position.y})
+	 else
+	    -- if the queue is not filled (this dosen't occur unless we are statring out)
+	    table.insert(ourBall.ballsPos, {x=ourBall.position.x, y=ourBall.position.y})
+	 end
+	 counter = 0
       end
-   else
-      -- The oponnent will wait in the middle so he have higher chance
-      -- to get the ball
-      if paddleOponnent.position.y+50<love.graphics.getHeight()/2 then
-	 paddleOponnent.moving = true
-	 paddleOponnent:moveDown(dt)
+
+      -- Simple boxtobox collision detection
+      -- check collision with walls
+      if (ourBall.position.y + ourBall.side >= love.graphics.getHeight())then
+	 ourBall.vy = ourBall.vy * -1
+	 ourBall.position.y = love.graphics.getHeight() - ourBall.side 
       end
-      if paddleOponnent.position.y+50>love.graphics.getHeight()/2 then
-	 paddleOponnent.moving = true
-	 paddleOponnent:moveUp(dt)
+
+      if (ourBall.position.y<=0) then
+	 ourBall.vy = ourBall.vy * -1
+	 ourBall.position.y = 0
       end
-   end
-   
-   counter = counter + dt
-   if counter>=0.08 then -- that's about 5 frames under my intel gpu with linux4.6
-      if table.getn(ourBall.ballsPos) == ourBall.shadowed then
-	 -- remove last ball and queue the current position (does lua have buily-in queue?)
-	 table.remove(ourBall.ballsPos, 1)
-	 table.insert(ourBall.ballsPos, {x=ourBall.position.x, y=ourBall.position.y})
-      else
-	 -- if the queue is not filled (this dosen't occur unless we are statring out)
-	 table.insert(ourBall.ballsPos, {x=ourBall.position.x, y=ourBall.position.y})
+
+      if (ourBall.position.x + ourBall.side >= love.graphics.getWidth()) then
+	 paddleOne.score = 1 + paddleOne.score
+	 ourBall.position.x = love.graphics.getWidth() / 2
+	 ourBall.position.y = love.graphics.getHeight() / 2
+	 ourBall.vx = choice[math.random(1, 2)]
       end
-      counter = 0
-   end
 
-   -- Simple boxtobox collision detection
-   -- check collision with walls
-   if (ourBall.position.y + ourBall.side >= love.graphics.getHeight())then
-      ourBall.vy = ourBall.vy * -1
-      ourBall.position.y = love.graphics.getHeight() - ourBall.side 
-   end
-
-   if (ourBall.position.y<=0) then
-      ourBall.vy = ourBall.vy * -1
-      ourBall.position.y = 0
-   end
-
-   if (ourBall.position.x + ourBall.side >= love.graphics.getWidth()) then
-      paddleOne.score = 1 + paddleOne.score
-      ourBall.position.x = love.graphics.getWidth() / 2
-      ourBall.position.y = love.graphics.getHeight() / 2
-      ourBall.vx = choice[math.random(1, 2)]
-   end
-
-   if (ourBall.position.x<=0) then
-      paddleOponnent.score = 1 + paddleOponnent.score
-      ourBall.position.x = love.graphics.getWidth() / 2
-      ourBall.position.y = love.graphics.getHeight() / 2
-      ourBall.vx = choice[math.random(1, 2)]
-   end
-
-   if powerUps["turboball"]["used"] and not powerUps["turboball"]["done"] then
-      powerUps["turboball"]["time"] =  powerUps["turboball"]["time"] - dt
-      if powerUps["turboball"]["time"] <= 0 then
-	 powerUps["turboball"]["done"] = true
-	 powerUps["turboball"]["used"] = false
-	 ourBall.speed = ourBall.defaultSpeed
-	 ourBall.color = {222, 219, 220}
+      if (ourBall.position.x<=0) then
+	 paddleOponnent.score = 1 + paddleOponnent.score
+	 ourBall.position.x = love.graphics.getWidth() / 2
+	 ourBall.position.y = love.graphics.getHeight() / 2
+	 ourBall.vx = choice[math.random(1, 2)]
       end
-   end
+
+      if powerUps["turboball"]["used"] and not powerUps["turboball"]["done"] then
+	 powerUps["turboball"]["time"] =  powerUps["turboball"]["time"] - dt
+	 if powerUps["turboball"]["time"] <= 0 then
+	    powerUps["turboball"]["done"] = true
+	    powerUps["turboball"]["used"] = false
+	    ourBall.speed = ourBall.defaultSpeed
+	    ourBall.color = {222, 219, 220}
+	 end
+      end
 
 
-   if powerUps["block"]["used"] and not powerUps["block"]["done"] then
-      powerUps["block"]["time"] = powerUps["block"]["time"] - dt
-      if powerUps["block"]["time"] <= 0 then
-	 powerUps["block"]["done"] = true
-	 powerUps["block"]["used"] = false
-	 paddleOponnent.speed = paddleOponnent.defaultSpeed
+      if powerUps["block"]["used"] and not powerUps["block"]["done"] then
+	 powerUps["block"]["time"] = powerUps["block"]["time"] - dt
+	 if powerUps["block"]["time"] <= 0 then
+	    powerUps["block"]["done"] = true
+	    powerUps["block"]["used"] = false
+	    paddleOponnent.speed = paddleOponnent.defaultSpeed
+	 end
       end
-   end
-   
-   -- check collision with paddles
-   if (ourBall.position.x<=20) then
-      if (ourBall.position.y>=paddleOne.position.y) and (ourBall.position.y<=paddleOne.position.y+100) then
-	 ourBall.vx = ourBall.vx * -1
-	 ourBall.position.x = 20
+      
+      -- check collision with paddles
+      if (ourBall.position.x<=20) then
+	 if (ourBall.position.y>=paddleOne.position.y) and (ourBall.position.y<=paddleOne.position.y+100) then
+	    ourBall.vx = ourBall.vx * -1
+	    ourBall.position.x = 20
+	 end
       end
-   end
 
-   if (ourBall.position.x+ourBall.side>=love.graphics.getWidth() - 20) then
-      if (ourBall.position.y>=paddleOponnent.position.y) and (ourBall.position.y<=paddleOponnent.position.y+100) then
-	 ourBall.vx = ourBall.vx * -1
-	 ourBall.position.x = love.graphics.getWidth() - 10 * 2 - ourBall.side
+      if (ourBall.position.x+ourBall.side>=love.graphics.getWidth() - 20) then
+	 if (ourBall.position.y>=paddleOponnent.position.y) and (ourBall.position.y<=paddleOponnent.position.y+100) then
+	    ourBall.vx = ourBall.vx * -1
+	    ourBall.position.x = love.graphics.getWidth() - 10 * 2 - ourBall.side
+	 end
       end
+      
+      ourBall.position.x = ourBall.position.x + ourBall.speed * dt * ourBall.vx
+      ourBall.position.y = ourBall.position.y + ourBall.speed * dt * ourBall.vy
    end
-   
-   ourBall.position.x = ourBall.position.x + ourBall.speed * dt * ourBall.vx
-   ourBall.position.y = ourBall.position.y + ourBall.speed * dt * ourBall.vy
 end
 
 
@@ -283,7 +291,8 @@ function love.draw()
       end
       love.graphics.print(value["screenName"], value["positionx"], love.graphics.getHeight() - 30)
    end
+   love.graphics.setColor(222, 219, 220, 255)
    if messShow then
-      love.graphics.printf("Press t to enable turboball\nPress b to block oponnent\nPress r to run the game\nPress h to toggle this message", 0, 400, 800, "center")
+      love.graphics.printf("Press p to play/pause\nPress t to enable turboball\nPress b to block oponnent\nPress r to run the game\nPress h to toggle this message\nWritten by Mohamed Aziz Knani", 0, 400, 800, "center")
    end
 end
