@@ -11,6 +11,9 @@
 
 
 -- this is our paddle
+
+choice = {-1, 1}
+
 paddle = {}
 
 function paddle:init(speed, step, position)
@@ -21,6 +24,7 @@ function paddle:init(speed, step, position)
    -- TODO: Set max speed for the AI player.
 
    newObj = {speed = speed, position = position, moving = false}
+   self.score = 0
    self.__index = self
    return setmetatable(newObj, self)
 end
@@ -73,10 +77,13 @@ end
 
 function love.load()
    -- This is where is laod all my assets
+
+   font = love.graphics.newFont("Semi-Casual.ttf", 20)
+   love.graphics.setFont(font)
    love.graphics.setBackgroundColor(20, 40, 70)
    paddleOne = paddle:init(400, 10, {x=0, y=0})
    paddleOponnent = paddle:init(400, 10, {x=love.graphics.getWidth()-10*2, y=0})
-   ourBall = ball:init(200, 20, {x=20, y=100}, 3)
+   ourBall = ball:init(400, 20, {x=love.graphics.getWidth()/2, y=love.graphics.getHeight()/2}, 3)
 end
 
 
@@ -158,18 +165,22 @@ function love.update(dt)
    end
 
    if (ourBall.position.x + ourBall.side >= love.graphics.getWidth()) then
-      
+      paddleOne.score = 1 + paddleOne.score
+      ourBall.position.x = love.graphics.getWidth() / 2
+      ourBall.position.y = love.graphics.getHeight() / 2
+      ourBall.vx = choice[math.random(1, 2)]
    end
 
    if (ourBall.position.x<=0) then
-      ourBall.vx = ourBall.vx * -1
-      ourBall.position.x = 0
+      paddleOponnent.score = 1 + paddleOponnent.score
+      ourBall.position.x = love.graphics.getWidth() / 2
+      ourBall.position.y = love.graphics.getHeight() / 2
+      ourBall.vx = choice[math.random(1, 2)]
    end
 
    -- check collision with paddles
    if (ourBall.position.x<=20) then
       if (ourBall.position.y>=paddleOne.position.y) and (ourBall.position.y<=paddleOne.position.y+100) then
-	 print(ourBall.position.x)
 	 ourBall.vx = ourBall.vx * -1
 	 ourBall.position.x = 20
       end
@@ -193,6 +204,7 @@ function love.draw()
    love.graphics.setColor(255, 255, 255)
    paddleOne:draw()
    paddleOponnent:draw()
-
    ourBall:draw()
+   love.graphics.print(paddleOne.score .. " " .. paddleOponnent.score, love.graphics.getWidth()/2 - 20)
+
 end
