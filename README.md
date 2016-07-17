@@ -5,7 +5,7 @@ My projects made while starting out love2d and lua.
 
 To run the programs you should get love, if you are under Debian based distros, run:
 
-> # apt-get install love
+> sudo apt-get install love
 
 and then clonning the repo by doing
 
